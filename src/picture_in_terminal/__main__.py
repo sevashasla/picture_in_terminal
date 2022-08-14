@@ -1,8 +1,11 @@
 from PIL import Image
 import numpy as np
-from image_to_brailer import ImageToBrailer
 import argparse
-import cv2
+
+from image_to_braille import ImageToBraille
+from image_processing import image_process
+from video_play import VideoPlayer
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -22,38 +25,21 @@ def main():
         "--window_size", dest="window_size", 
         default=[7, 7], action="store", 
         type=int, help='size of the specific window', nargs=2)
+    parser.add_argument(
+        "--type", dest="type", type=str, help='there are 2 options: \n\
+            video: if you want to play the video, \n\
+            picture: if you want to see the picture. \n', default='picture')
     args = parser.parse_args()
 
-    img = Image.open(args.path)
-    img.thumbnail(args.max_size)
-
-    # to numpy
-    img = np.asarray(img)
-    
-    # binarize
-    if args.type_binarize == "my":
-        img_binary = (img[:, :, 0] > np.quantile(img[:, :, 0].flatten(), 0.4)).astype(np.uint8)
-    elif args.type_binarize == "binary":
-        _, img_binary = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
-        img_binary = img_binary[:, :, 0] // 255
-    elif args.type_binarize == "mean":
-        img_binary = cv2.adaptiveThreshold(
-            img[:, :, 0], 255, 
-            cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 
-            args.window_size[0], args.window_size[1]
-        ) // 255
-    elif args.type_binarize == "gaussian":
-        img_binary = cv2.adaptiveThreshold(
-            img[:, :, 0], 255, 
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 
-            args.window_size[0], args.window_size[1]
-        ) // 255
-    else:
-        print("Wrong type of binarization!")
-        return
-    
-    # print the image
-    ImageToBrailer(img_binary).show()
+    if args.type == 'picture':
+        img = Image.open(args.path)
+        img_binary = image_process(img, args)
+        
+        # print the image
+        ImageToBraille(img_binary).show()
+    elif args.type == 'video':
+        player = VideoPlayer(args)
+        player.play()
     
 if __name__ == "__main__":
     main()
