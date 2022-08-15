@@ -25,10 +25,16 @@ def main():
         "--window_size", dest="window_size", 
         default=[7, 7], action="store", 
         type=int, help='size of the specific window', nargs=2)
+
+
     parser.add_argument(
         "--type", dest="type", type=str, help='there are 2 options: \n\
             video: if you want to play the video, \n\
             picture: if you want to see the picture. \n', default='picture')
+
+    parser.add_argument('--video', dest='video', action='store_true', help='you want to play video')
+    parser.add_argument('--no-video', dest='video', action='store_false', help="you don't want to play video (default)")
+    parser.set_defaults(video=False)
 
     parser.add_argument('--audio', dest='audio', action='store_true', help='you want audio in video')
     parser.add_argument('--no-audio', dest='audio', action='store_false', help="you don't want audio in video(default)")
@@ -36,13 +42,13 @@ def main():
 
     args = parser.parse_args()
 
-    if args.type == 'picture':
+    if not args.video:
         img = Image.open(args.path)
         img_binary = image_process(img, args)
         
         # print the image
         ImageToBraille(img_binary).show()
-    elif args.type == 'video':
+    else:
         player = VideoPlayer(args)
         player.play()
     
